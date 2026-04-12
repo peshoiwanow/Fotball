@@ -2,11 +2,12 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+import re
 
 # 1. Настройки на страницата
 st.set_page_config(page_title="AI Ultra Intelligence", page_icon="🧠", layout="centered")
 
-# 2. Стилизиране (CSS) - Напълно изчистен дизайн
+# 2. Стилизиране (CSS)
 st.markdown("""
     <style>
     .stApp { background-color: #0b0e11; }
@@ -21,11 +22,12 @@ st.markdown("""
     .confidence-score { color: #00ff88; font-weight: 900; font-size: 24px; }
     .section-header {
         color: #58a6ff;
-        font-size: 18px;
+        font-size: 19px;
         font-weight: bold;
-        margin-top: 15px;
-        border-bottom: 1px solid #30363d;
-        padding-bottom: 5px;
+        margin-top: 20px;
+        border-bottom: 2px solid #30363d;
+        padding-bottom: 8px;
+        margin-bottom: 10px;
     }
     .market-badge {
         background-color: #1f2937;
@@ -35,14 +37,6 @@ st.markdown("""
         color: #10b981;
         font-size: 14px;
     }
-    /* Стил за текста на анализа, който премахва черните кутии */
-    .analysis-body {
-        color: #c9d1d9;
-        font-size: 16px;
-        line-height: 1.6;
-        white-space: pre-wrap;
-        background: transparent !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -50,7 +44,7 @@ st.title("🧠 AI Football Deep-Intelligence")
 st.write(f"📊 **Системен анализ за:** {datetime.now().strftime('%d.%m.%Y')}")
 st.divider()
 
-# 3. Функция за зареждане на данни
+# 3. Зареждане на данни
 def load_data():
     if os.path.exists('data.json'):
         try:
@@ -59,25 +53,26 @@ def load_data():
         except: return []
     return []
 
-# 4. Функция за почистване и превод на български
-def clean_and_translate(text):
+# 4. Функция за "Разкрасяване" на текста (Маха прозорците и превежда)
+def format_clean_text(text):
     if not text: return ""
-    # Автоматичен превод на термини
-    translations = {
-        "(Out)": "(Аут - контузен)",
-        "(Doubtful)": "(Под въпрос)",
-        "(Suspended)": "(Наказан)",
-        "(Returning)": "(Завръща се)",
-        "minor knock": "лека травма",
-        "from suspension": "след наказание",
-        "---": "",
-        "###": "",
-        "</div>": "",
-        "<div>": ""
+    
+    # 1. Премахваме излишните интервали в началото на всеки нов ред (това маха черните кутии)
+    lines = [line.strip() for line in text.split('\n')]
+    text = "\n".join(lines)
+    
+    # 2. Автоматичен превод на термини
+    replacements = {
+        "(Out)": "🔴 (Аут)",
+        "(Doubtful)": "🟡 (Под въпрос)",
+        "(Suspended)": "🚫 (Наказан)",
+        "(Returning)": "🟢 (Завръща се)",
+        "---": "", "###": "", "</div>": "", "<div>": ""
     }
-    for eng, bg in translations.items():
+    for eng, bg in replacements.items():
         text = text.replace(eng, bg)
-    return text.strip()
+    
+    return text
 
 # 5. Визуализация
 matches = load_data()
@@ -86,7 +81,7 @@ if not matches:
     st.info("🕒 AI Анализаторът подготвя докладите...")
 else:
     for m in matches:
-        # Основна карта на мача
+        # Основна карта
         st.markdown(f"""
         <div class="report-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -101,25 +96,28 @@ else:
         """, unsafe_allow_html=True)
 
         with st.expander("📄 ВИЖ ПЪЛЕН ЕКСПЕРТЕН АНАЛИЗ"):
-            # 1. ТАКТИЧЕСКА ОБОСНОВКА
+            # Изчистване на текстовете
+            full_analysis = format_clean_text(m.get('strat', ''))
+            injuries = format_clean_text(m.get('injuries', 'Няма данни.'))
+            referee = format_clean_text(m.get('ref', 'Информацията се обновява.'))
+
+            # Секция 1: Тактика и Обосновка
             st.markdown("<div class='section-header'>🔍 1. Пълна Обосновка</div>", unsafe_allow_html=True)
-            # Използваме st.text за избягване на автоматичното форматиране като код
-            cleaned_strat = clean_and_translate(m.get('strat', ''))
-            st.write(cleaned_strat)
+            st.write(full_analysis) # st.write изобразява чист текст без кутии
             
-            # 2. КАДРОВА СИТУАЦИЯ
+            # Секция 2: Състави
             st.markdown("<div class='section-header'>🚑 2. Състави и Липсващи Играчи</div>", unsafe_allow_html=True)
-            st.warning(clean_and_translate(m.get('injuries', 'Няма липсващи.')))
+            st.warning(injuries)
             
-            # 3. СЪДИЯ И ПСИХОЛОГИЯ
+            # Секция 3: Рефер
             st.markdown("<div class='section-header'>⚖️ 3. Съдия и Напрежение</div>", unsafe_allow_html=True)
-            st.write(clean_and_translate(m.get('ref', 'Информацията се обновява...')))
+            st.write(referee)
             
-            # 4. АЛТЕРНАТИВНИ ПАЗАРИ
+            # Секция 4: Други
             if 'other' in m:
                 st.markdown("<div class='section-header'>📊 4. Алтернативни Вероятности</div>", unsafe_allow_html=True)
                 for market, prob in m['other'].items():
                     st.write(f"🔹 {market}: **{prob}**")
 
 st.divider()
-st.caption("Верифициран AI анализ | Всички права запазени")
+st.caption("Верифициран AI анализ | Ежедневно обновяване")
