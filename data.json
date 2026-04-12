@@ -1,1 +1,16 @@
-[]
+[
+    {
+        "match": "Real Madrid vs Barcelona",
+        "date": "12.04.2026",
+        "market": "1X2",
+        "tip": "Real Madrid",
+        "prob": "78%",
+        "strat": "Пълномащабен анализ на база последните 5 мача и липсата на Левандовски...",
+        "injuries": "Barcelona: Lewandowski (Out), De Jong (Doubtful)",
+        "ref": "Mateu Lahoz: Склонен към картони",
+        "other": {
+            "Over 2.5": "80%"
+        },
+        "result": "pending"
+    }
+]
