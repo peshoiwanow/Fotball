@@ -6,7 +6,7 @@ from datetime import datetime
 # 1. Настройки на страницата
 st.set_page_config(page_title="AI Ultra Intelligence", page_icon="🧠", layout="centered")
 
-# 2. Стилизиране (CSS)
+# 2. Стилизиране (CSS) - Напълно изчистен дизайн
 st.markdown("""
     <style>
     .stApp { background-color: #0b0e11; }
@@ -35,11 +35,13 @@ st.markdown("""
         color: #10b981;
         font-size: 14px;
     }
+    /* Стил за текста на анализа, който премахва черните кутии */
     .analysis-body {
         color: #c9d1d9;
         font-size: 16px;
         line-height: 1.6;
-        padding: 10px 0;
+        white-space: pre-wrap;
+        background: transparent !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -57,21 +59,25 @@ def load_data():
         except: return []
     return []
 
-# 4. Почистване на текста (Премахва артефакти)
-def clean_text(text):
-    # Превежда ключови думи от английски на български автоматично
-    replacements = {
+# 4. Функция за почистване и превод на български
+def clean_and_translate(text):
+    if not text: return ""
+    # Автоматичен превод на термини
+    translations = {
         "(Out)": "(Аут - контузен)",
         "(Doubtful)": "(Под въпрос)",
         "(Suspended)": "(Наказан)",
         "(Returning)": "(Завръща се)",
         "minor knock": "лека травма",
+        "from suspension": "след наказание",
         "---": "",
-        "###": ""
+        "###": "",
+        "</div>": "",
+        "<div>": ""
     }
-    for eng, bg in replacements.items():
+    for eng, bg in translations.items():
         text = text.replace(eng, bg)
-    return text
+    return text.strip()
 
 # 5. Визуализация
 matches = load_data()
@@ -80,7 +86,7 @@ if not matches:
     st.info("🕒 AI Анализаторът подготвя докладите...")
 else:
     for m in matches:
-        # Основна карта
+        # Основна карта на мача
         st.markdown(f"""
         <div class="report-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -95,24 +101,25 @@ else:
         """, unsafe_allow_html=True)
 
         with st.expander("📄 ВИЖ ПЪЛЕН ЕКСПЕРТЕН АНАЛИЗ"):
-            # Тактика
+            # 1. ТАКТИЧЕСКА ОБОСНОВКА
             st.markdown("<div class='section-header'>🔍 1. Пълна Обосновка</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='analysis-body'>{clean_text(m.get('strat'))}</div>", unsafe_allow_html=True)
+            # Използваме st.text за избягване на автоматичното форматиране като код
+            cleaned_strat = clean_and_translate(m.get('strat', ''))
+            st.write(cleaned_strat)
             
-            # Състави
+            # 2. КАДРОВА СИТУАЦИЯ
             st.markdown("<div class='section-header'>🚑 2. Състави и Липсващи Играчи</div>", unsafe_allow_html=True)
-            injuries_text = clean_text(m.get('injuries', 'Няма липсващи.'))
-            st.warning(injuries_text)
+            st.warning(clean_and_translate(m.get('injuries', 'Няма липсващи.')))
             
-            # Рефер
+            # 3. СЪДИЯ И ПСИХОЛОГИЯ
             st.markdown("<div class='section-header'>⚖️ 3. Съдия и Напрежение</div>", unsafe_allow_html=True)
-            st.write(m.get('ref'))
+            st.write(clean_and_translate(m.get('ref', 'Информацията се обновява...')))
             
-            # Други
+            # 4. АЛТЕРНАТИВНИ ПАЗАРИ
             if 'other' in m:
                 st.markdown("<div class='section-header'>📊 4. Алтернативни Вероятности</div>", unsafe_allow_html=True)
                 for market, prob in m['other'].items():
                     st.write(f"🔹 {market}: **{prob}**")
 
 st.divider()
-st.caption("Системата използва невронни мрежи за анализ на тактически данни в реално време.")
+st.caption("Верифициран AI анализ | Всички права запазени")
