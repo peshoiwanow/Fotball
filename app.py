@@ -2,9 +2,8 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-import re
 
-# 1. Настройки на страницата
+# 1. Основна конфигурация
 st.set_page_config(page_title="AI Ultra Intelligence", page_icon="🧠", layout="centered")
 
 # 2. Стилизиране (CSS)
@@ -44,7 +43,7 @@ st.title("🧠 AI Football Deep-Intelligence")
 st.write(f"📊 **Системен анализ за:** {datetime.now().strftime('%d.%m.%Y')}")
 st.divider()
 
-# 3. Зареждане на данни
+# 3. Функция за зареждане на данни
 def load_data():
     if os.path.exists('data.json'):
         try:
@@ -53,35 +52,40 @@ def load_data():
         except: return []
     return []
 
-# 4. Функция за "Разкрасяване" на текста (Маха прозорците и превежда)
-def format_clean_text(text):
+# 4. ИНТЕЛИГЕНТЕН ЧИСТАЧ (Премахва английския текст и оправя формата)
+def super_clean(text):
     if not text: return ""
     
-    # 1. Премахваме излишните интервали в началото на всеки нов ред (това маха черните кутии)
-    lines = [line.strip() for line in text.split('\n')]
-    text = "\n".join(lines)
-    
-    # 2. Автоматичен превод на термини
+    # Списък за почистване на специфични английски фрази, които видяхме на снимките ти
     replacements = {
         "(Out)": "🔴 (Аут)",
         "(Doubtful)": "🟡 (Под въпрос)",
         "(Suspended)": "🚫 (Наказан)",
-        "(Returning)": "🟢 (Завръща се)",
-        "---": "", "###": "", "</div>": "", "<div>": ""
+        "(Returning from suspension but with minor knock)": "🟢 (Завръща се, но с лека травма)",
+        "minor knock": "лека травма",
+        "---": "",
+        "###": "",
+        "</div>": "",
+        "<div>": ""
     }
+    
+    # 1. Прилагаме преводите
     for eng, bg in replacements.items():
         text = text.replace(eng, bg)
     
-    return text
+    # 2. Почистваме излишни празни места в началото на всеки ред (маха черните кутии)
+    lines = [line.strip() for line in text.split('\n')]
+    
+    return "\n".join(lines).strip()
 
-# 5. Визуализация
+# 5. Основна визуализация
 matches = load_data()
 
 if not matches:
     st.info("🕒 AI Анализаторът подготвя докладите...")
 else:
     for m in matches:
-        # Основна карта
+        # Карта на мача
         st.markdown(f"""
         <div class="report-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -96,16 +100,16 @@ else:
         """, unsafe_allow_html=True)
 
         with st.expander("📄 ВИЖ ПЪЛЕН ЕКСПЕРТЕН АНАЛИЗ"):
-            # Изчистване на текстовете
-            full_analysis = format_clean_text(m.get('strat', ''))
-            injuries = format_clean_text(m.get('injuries', 'Няма данни.'))
-            referee = format_clean_text(m.get('ref', 'Информацията се обновява.'))
+            # Изчистване на текстовете преди показване
+            strategy = super_clean(m.get('strat', ''))
+            injuries = super_clean(m.get('injuries', 'Няма данни.'))
+            referee = super_clean(m.get('ref', 'Информацията се обновява.'))
 
-            # Секция 1: Тактика и Обосновка
+            # Секция 1: Обосновка
             st.markdown("<div class='section-header'>🔍 1. Пълна Обосновка</div>", unsafe_allow_html=True)
-            st.write(full_analysis) # st.write изобразява чист текст без кутии
+            st.write(strategy)
             
-            # Секция 2: Състави
+            # Секция 2: Кадрова ситуация
             st.markdown("<div class='section-header'>🚑 2. Състави и Липсващи Играчи</div>", unsafe_allow_html=True)
             st.warning(injuries)
             
@@ -120,4 +124,4 @@ else:
                     st.write(f"🔹 {market}: **{prob}**")
 
 st.divider()
-st.caption("Верифициран AI анализ | Ежедневно обновяване")
+st.caption("AI Deep Learning Analysis System")
