@@ -1,0 +1,32 @@
+name: Daily Football Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Изпълнение точно в 00:00 всеки ден
+  workflow_dispatch: # Позволява ти да го пуснеш и ръчно
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python scraper.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add data.json
+          git commit -m "Auto-update matches" || exit 0
+          git push
