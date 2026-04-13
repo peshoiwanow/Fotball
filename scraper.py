@@ -6,20 +6,19 @@ from datetime import datetime
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def run():
-    print("🚀 СТАРТ НА АВТОНОМНИЯ AI СКРАПЕР (Stable Mode)...")
+    print("🚀 СТАРТ НА СКРАПЕРА (Compatibility Mode)...")
     if not GEMINI_API_KEY:
         print("❌ ГРЕШКА: Липсва GEMINI_API_KEY!")
         return
 
-    # Използваме базовия gemini-pro през v1beta - това е най-универсалният модел
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+    # Използваме директен v1 път към gemini-1.5-flash
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     today = datetime.now().strftime('%d.%m.%Y')
     prompt = (
-        f"Днес е {today}. Намери 5-те най-интересни футболни мача за днес или утре. "
-        "Направи анализ и прогноза. "
-        "Върни резултата САМО като чист JSON списък от обекти с ключове: "
-        "match, prob, strat, tip, market, injuries, ref."
+        f"Днес е {today}. Намери 5 футболни мача за днес. "
+        "Върни САМО чист JSON списък: "
+        "[{\"match\": \"...\", \"tip\": \"...\", \"prob\": \"...\"}]"
     )
 
     payload = {
@@ -27,17 +26,23 @@ def run():
     }
 
     try:
-        print("🔍 Комуникация със стабилния модел на Google...")
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload, timeout=30)
         res_data = response.json()
         
+        # Ако v1 даде 404, опитваме последен шанс с v1beta автоматично
+        if response.status_code == 404:
+            print("🔄 v1 не е намерен, опит с v1beta...")
+            url = url.replace("/v1/", "/v1beta/")
+            response = requests.post(url, json=payload, timeout=30)
+            res_data = response.json()
+
         if 'error' in res_data:
-            print(f"❌ API ГРЕШКА: {res_data['error']['message']}")
+            print(f"❌ API ГРЕШКА ({res_data['error'].get('status')}): {res_data['error'].get('message')}")
             return
 
-        # Извличане на текста и почистване на JSON
         raw_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
         
+        # Почистване на JSON ако AI сложи markdown
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0]
         elif "```" in raw_text:
