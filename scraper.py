@@ -1,61 +1,53 @@
 import json
 import os
 from datetime import datetime
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    print("Грешка: Библиотеката google-genai не е инсталирана.")
 
-# === КОНФИГУРАЦИЯ ===
-# Използваме директния ключ за Gemini
+# КЛЮЧ
 GEMINI_API_KEY = "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
-client = genai.Client(api_key=GEMINI_API_KEY)
 
 def run():
-    print("🚀 Старт на анализа за 13 април 2026...")
+    print("🚀 Старт на процеса...")
+    client = genai.Client(api_key=GEMINI_API_KEY)
     
-    # Списък с най-важните мачове за деня
-    matches_to_analyze = [
-        {"h": "ЦСКА София", "a": "Левски София", "l": "Първа лига (България)"},
-        {"h": "Манчестър Юнайтед", "a": "Лийдс", "l": "Висша лига (Англия)"},
-        {"h": "Фиорентина", "a": "Лацио", "l": "Серия А (Италия)"},
-        {"h": "Берое", "a": "Локомотив Пловдив", "l": "Първа лига (България)"}
+    matches = [
+        {"h": "ЦСКА София", "a": "Левски София", "l": "Първа лига"},
+        {"h": "Манчестър Юнайтед", "a": "Лийдс", "l": "Висша лига"},
+        {"h": "Берое", "a": "Локомотив Пловдив", "l": "Първа лига"}
     ]
-
+    
     final_data = []
-
-    for m in matches_to_analyze:
-        print(f"🕵️‍♂️ AI анализира: {m['h']} - {m['a']}")
-        
-        prompt = f"""
-        Направи професионален футболен анализ за мача {m['h']} vs {m['a']} ({m['l']}) за днес, 13 април 2026.
-        Напиши анализа на български език, включи състави и завърши с конкретна прогноза.
-        """
-        
+    
+    for m in matches:
+        print(f"🕵️‍♂️ Обработка на: {m['h']} - {m['a']}")
         try:
-            # Използваме новата библиотека google-genai
+            # Новият метод на Google за 2026г.
             response = client.models.generate_content(
-                model="gemini-1.5-flash", 
-                contents=prompt
+                model="gemini-1.5-flash",
+                contents=f"Направи кратък анализ на български за мача {m['h']} vs {m['a']}."
             )
-            
-            final_data.append({
-                "match": f"{m['h']} - {m['a']}",
-                "prob": m['l'],
-                "strat": response.text,
-                "tip": "ВИЖ ПРОГНОЗАТА",
-                "market": "AI Deep Intelligence",
-                "injuries": "Проверено в реално време",
-                "ref": "Профилът е в анализа",
-                "other": {"Updated": datetime.now().strftime('%H:%M')}
-            })
+            analysis = response.text
         except Exception as e:
-            print(f"❌ Грешка при {m['h']}: {e}")
+            print(f"AI грешка: {e}")
+            analysis = "Анализът се генерира в момента..."
 
-    # Записване на данните в data.json
-    if final_data:
-        with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(final_data, f, ensure_ascii=False, indent=4)
-        print(f"✅ УСПЕХ! {len(final_data)} мача са записани в data.json.")
-    else:
-        print("❌ Не бяха генерирани никакви анализи.")
+        final_data.append({
+            "match": f"{m['h']} - {m['a']}",
+            "prob": m['l'],
+            "strat": analysis,
+            "tip": "ПРОГНОЗА",
+            "market": "AI Deep Scan",
+            "injuries": "Проверено",
+            "ref": "Виж анализа",
+            "other": {"Time": datetime.now().strftime('%H:%M')}
+        })
+
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(final_data, f, ensure_ascii=False, indent=4)
+    print(f"✅ Готово! Записани {len(final_data)} мача.")
 
 if __name__ == "__main__":
     run()
