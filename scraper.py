@@ -11,23 +11,24 @@ def run():
         print("❌ Липсва API Ключ!")
         return
 
-    genai.configure(api_key=GEMINI_API_KEY)
+    # Изрично конфигуриране за работа със стабилната версия v1
+    genai.configure(api_key=GEMINI_API_KEY, transport='rest')
     
-    # ФИКС: Използваме стабилното име на модела
-    model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+    # Използваме базовото име на модела
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
     today = datetime.now().strftime('%d.%m.%Y')
     prompt = f"""
     Днес е {today}. Намери 5-те най-важни футболни мача за днес или утре.
-    Върни резултата САМО като чист JSON списък:
+    Върни резултата САМО като чист JSON списък, без никакви обяснения преди или след него:
     [
       {{
         "match": "Отбор А - Отбор Б",
         "prob": "Лига и Час",
-        "strat": "Подробен анализ на форма и тактика...",
+        "strat": "Подробен анализ...",
         "tip": "Прогноза",
         "market": "Коефициент",
-        "injuries": "Контузии и състави",
+        "injuries": "Контузии",
         "ref": "Съдия"
       }}
     ]
@@ -35,18 +36,24 @@ def run():
 
     try:
         print("🔍 AI претърсва интернет за мачове...")
-        # Добавяме и сигурен timeout
+        # Генериране на съдържание
         response = model.generate_content(prompt)
         
-        text = response.text.replace('```json', '').replace('```', '').strip()
-        data = json.loads(text)
+        # Почистване на текста от евентуални markdown маркери
+        content = response.text.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.endswith("```"):
+            content = content[:-3]
+        
+        data = json.loads(content.strip())
         
         with open('data.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         print(f"✅ УСПЕХ: Записани {len(data)} мача.")
             
     except Exception as e:
-        print(f"❌ Критична грешка: {e}")
+        print(f"❌ Критична грешка: {str(e)}")
 
 if __name__ == "__main__":
     run()
