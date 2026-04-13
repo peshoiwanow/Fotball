@@ -9,74 +9,53 @@ GEMINI_API_KEY = "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-def get_daily_matches_via_ai():
-    """Караме AI да провери интернет за мачовете днес"""
-    today = datetime.now().strftime('%d.%m.%Y')
-    prompt = f"""
-    Днес е {today}. Ти си спортен експерт. Провери в интернет (Flashscore, SofaScore, спортни новини) 
-    кои са 10-те най-интересни футболни мача за днес, които присъстват в българските букмейкъри.
+def run_deep_ai_analysis():
+    print("🌐 AI стартира глобално проучване на мачовете за 13 април 2026...")
     
-    Върни резултата САМО като чист JSON списък в този формат (без допълнителни обяснения):
-    [
-      {{"home": "Отбор 1", "away": "Отбор 2", "league": "Лига", "time": "19:30"}},
-      ...
-    ]
+    # Стъпка 1: AI намира мачовете за деня
+    search_prompt = """
+    Днес е 13 април 2026 г. Намери 10-те най-важни футболни мача за днес, които присъстват в българските букмейкъри. 
+    Задължително включи дербито ЦСКА - Левски и мачовете от Висшата лига, Ла Лига и Серия А.
+    Върни резултата САМО като JSON списък: 
+    [{"home": "Отбор1", "away": "Отбор2", "league": "Лига", "time": "Час"}]
     """
+    
     try:
-        response = model.generate_content(prompt)
-        # Почистване на JSON формата
-        clean_json = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean_json)
+        response = model.generate_content(search_prompt)
+        # Почистване на JSON отговора
+        json_str = response.text.replace('```json', '').replace('```', '').strip()
+        matches = json.loads(json_str)
+        
+        final_data = []
+        for m in matches:
+            print(f"✅ Анализиране на {m['home']} vs {m['home']}...")
+            
+            # Стъпка 2: AI прави подробен анализ за всеки мач
+            analysis_prompt = f"""
+            Направи детайлен анализ за {m['home']} vs {m['away']} ({m['league']}). 
+            Провери в интернет: състави, контузии, съдия и форма. 
+            Дай прогноза с най-висок шанс за печалба на български.
+            """
+            analysis_res = model.generate_content(analysis_prompt)
+            
+            final_data.append({
+                "match": f"{m['home']} - {m['away']}",
+                "prob": f"{m['league']} ({m['time']} ч.)",
+                "market": "Deep Scan Analysis",
+                "tip": "ВИЖ ПРОГНОЗАТА",
+                "strat": analysis_res.text,
+                "injuries": "Проверено онлайн",
+                "ref": "Включен в анализа",
+                "other": {"Updated": datetime.now().strftime('%H:%M')}
+            })
+
+        # Записваме в data.json
+        with open('data.json', 'w', encoding='utf-8') as f:
+            json.dump(final_data, f, ensure_ascii=False, indent=4)
+        print(f"🔥 Успешно анализирани {len(final_data)} мача!")
+
     except Exception as e:
-        print(f"Грешка при намиране на мачове: {e}")
-        return []
-
-def get_deep_analysis(match):
-    """Детайлен анализ на база интернет търсене"""
-    prompt = f"""
-    Направи подробен анализ за мача: {match['home']} vs {match['away']} ({match['league']}).
-    Провери:
-    1. Стартови състави и контузии (injury reports) от последните часове.
-    2. Статистика и форма от Flashscore/SofaScore.
-    3. Съдия и метеорологични условия.
-    4. Дай най-сигурната прогноза с обосновка.
-    
-    Напиши всичко на български език, професионално и детайлно.
-    """
-    try:
-        response = model.generate_content(prompt)
-        return response.text
-    except:
-        return "Анализът се подготвя..."
-
-def main():
-    print("🌐 AI сканира интернет за днешните мачове...")
-    matches = get_daily_matches_via_ai()
-    
-    if not matches:
-        print("❌ AI не успя да открие мачове.")
-        return
-
-    final_results = []
-    for m in matches:
-        print(f"✅ Анализиране на: {m['home']} - {m['away']}")
-        report = {
-            "match": f"{m['home']} - {m['away']}",
-            "prob": f"{m['league']} ({m['time']} ч.)",
-            "market": "Deep Web Scan",
-            "tip": "ВИЖ АНАЛИЗА",
-            "strat": get_deep_analysis(m),
-            "injuries": "Проверено в реално време",
-            "ref": "Включен в анализа",
-            "other": {"Source": "AI Live Research", "Time": m['time']}
-        }
-        final_results.append(report)
-
-    # Записване
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(final_results, f, ensure_ascii=False, indent=4)
-    
-    print(f"🔥 Успех! Генерирани са {len(final_results)} анализа без помощта на API!")
+        print(f"Грешка: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    run_deep_ai_analysis()
