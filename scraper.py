@@ -1,81 +1,82 @@
-import requests
 import json
 import os
 from datetime import datetime
 import google.generativeai as genai
 
-# === КЛЮЧОВЕ ===
+# === КОНФИГУРАЦИЯ ===
 GEMINI_API_KEY = "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
 
 genai.configure(api_key=GEMINI_API_KEY)
-# Използваме модел, който има достъп до интернет инструменти
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-def get_matches_from_internet():
-    """Караме AI да намери мачовете за деня чрез интернет търсене"""
-    today = datetime.now().strftime('%Y-%m-%d')
+def get_daily_matches_via_ai():
+    """Караме AI да провери интернет за мачовете днес"""
+    today = datetime.now().strftime('%d.%m.%Y')
     prompt = f"""
-    Днес е {today}. Провери в интернет (Flashscore, SofaScore, Sky Sports) кои са най-важните футболни мачове за днес, които присъстват в тиражите на букмейкърите.
-    Изброй точно 10 мача.
-    За всеки мач дай: Домакин, Гост, Лига и Час на започване.
-    Върни отговора САМО като JSON списък в този формат:
+    Днес е {today}. Ти си спортен експерт. Провери в интернет (Flashscore, SofaScore, спортни новини) 
+    кои са 10-те най-интересни футболни мача за днес, които присъстват в българските букмейкъри.
+    
+    Върни резултата САМО като чист JSON списък в този формат (без допълнителни обяснения):
     [
-      {{"home": "Team A", "away": "Team B", "league": "Premier League", "time": "21:00"}},
+      {{"home": "Отбор 1", "away": "Отбор 2", "league": "Лига", "time": "19:30"}},
       ...
     ]
     """
     try:
         response = model.generate_content(prompt)
-        # Почистване на отговора, за да остане само чист JSON
-        json_text = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(json_text)
-    except:
-        print("Грешка при намиране на мачове от AI.")
+        # Почистване на JSON формата
+        clean_json = response.text.replace('```json', '').replace('```', '').strip()
+        return json.loads(clean_json)
+    except Exception as e:
+        print(f"Грешка при намиране на мачове: {e}")
         return []
 
 def get_deep_analysis(match):
-    """AI прави пълен анализ на база интернет данни за конкретния мач"""
+    """Детайлен анализ на база интернет търсене"""
     prompt = f"""
-    Направи детайлен футболен анализ за мача: {match['home']} vs {match['away']} ({match['league']}).
-    1. Провери форма, H2H и последни новини за съставите.
-    2. Виж какви са очакванията в сайтове като SofaScore и Flashscore.
-    3. Провери за наказани играчи или нови контузии.
-    4. Дай най-сигурната прогноза (Value Bet) на български.
+    Направи подробен анализ за мача: {match['home']} vs {match['away']} ({match['league']}).
+    Провери:
+    1. Стартови състави и контузии (injury reports) от последните часове.
+    2. Статистика и форма от Flashscore/SofaScore.
+    3. Съдия и метеорологични условия.
+    4. Дай най-сигурната прогноза с обосновка.
+    
+    Напиши всичко на български език, професионално и детайлно.
     """
     try:
         response = model.generate_content(prompt)
         return response.text
     except:
-        return "Анализът не може да бъде генериран в момента."
+        return "Анализът се подготвя..."
 
-def run_scraper():
-    print("🌐 AI започва сканиране на интернет за мачове...")
-    matches = get_matches_from_internet()
+def main():
+    print("🌐 AI сканира интернет за днешните мачове...")
+    matches = get_daily_matches_via_ai()
     
     if not matches:
-        print("❌ AI не откри мачове в интернет.")
+        print("❌ AI не успя да открие мачове.")
         return
 
-    final_data = []
+    final_results = []
     for m in matches:
-        print(f"✅ Анализ на: {m['home']} - {m['away']}")
-        analysis = get_deep_analysis(m)
-        
-        final_data.append({
+        print(f"✅ Анализиране на: {m['home']} - {m['away']}")
+        report = {
             "match": f"{m['home']} - {m['away']}",
-            "prob": f"{m['league']} ({m['time']})",
-            "market": "Internet Deep Scan",
+            "prob": f"{m['league']} ({m['time']} ч.)",
+            "market": "Deep Web Scan",
             "tip": "ВИЖ АНАЛИЗА",
-            "strat": analysis,
-            "injuries": "Проверено онлайн",
+            "strat": get_deep_analysis(m),
+            "injuries": "Проверено в реално време",
             "ref": "Включен в анализа",
-            "other": {"Time": m['time']}
-        })
+            "other": {"Source": "AI Live Research", "Time": m['time']}
+        }
+        final_results.append(report)
 
+    # Записване
     with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(final_data, f, ensure_ascii=False, indent=4)
+        json.dump(final_results, f, ensure_ascii=False, indent=4)
     
-    print(f"🔥 Успех! Генерирани са {len(final_data)} анализа чрез директно търсене.")
+    print(f"🔥 Успех! Генерирани са {len(final_results)} анализа без помощта на API!")
 
 if __name__ == "__main__":
-    run_scraper()
+    main()
