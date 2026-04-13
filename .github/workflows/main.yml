@@ -1,22 +1,22 @@
-name: Daily Football Update
+name: Hourly Deep Analysis Update
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Изпълнение точно в 00:00 всеки ден
-  workflow_dispatch: # Позволява ти да го пуснеш и ръчно
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          
+
       - name: Install dependencies
         run: |
           pip install requests google-generativeai
@@ -28,6 +28,6 @@ jobs:
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          git add data.json archive/*.json
-          git commit -m "Auto-update matches and archive" || exit 0
+          git add data.json
+          git commit -m "Hourly AI update" || exit 0
           git push
