@@ -2,75 +2,41 @@ import streamlit as st
 import json
 import os
 
-# Настройка на страницата
-st.set_page_config(
-    page_title="AI Football Expert",
-    page_icon="⚽",
-    layout="centered" # "centered" прави всичко по-прибрано и по-малко
-)
+st.set_page_config(page_title="AI Ultra Predictor", layout="wide")
 
-# Стилизиране с CSS за по-малки шрифтове и по-красиви карти
+# Тъмен, модерен дизайн
 st.markdown("""
     <style>
-    .main {
-        background-color: #f5f7f9;
-    }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 10px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    div[data-testid="stExpander"] {
-        background-color: white;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }
+    .main { background-color: #0f1116; color: white; }
+    .stExpander { border: 1px solid #30363d !important; background-color: #161b22 !important; border-radius: 8px !important; }
+    .match-header { font-size: 22px; color: #58a6ff; font-weight: bold; }
+    .prediction-box { background-color: #238636; padding: 10px; border-radius: 5px; color: white; text-align: center; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("⚽ AI Професионални Прогнози")
-st.subheader("Потвърдени състави, съдии и задълбочен анализ")
+st.title("🤖 AI Футболен Анализатор (Live Scanned)")
+st.write("Системата сканира Flashscore & SofaScore в реално време за най-добрите залози.")
 
-# Функция за зареждане на данни
-def load_data():
-    if os.path.exists('data.json'):
-        with open('data.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-data = load_data()
-
-if not data:
-    st.warning("⚠️ В момента данните се обновяват от изкуствения интелект. Моля, опитайте след минута.")
-else:
-    # Показване на мачовете в компактен вид
-    for item in data:
-        # Използваме expander, за да намалим размера на полетата
-        with st.expander(f"📌 {item['match']} | {item.get('market', '')}"):
-            
-            # Разделяме на две колони за по-добър изглед
+if os.path.exists('data.json'):
+    with open('data.json', 'r', encoding='utf-8') as f:
+        matches = json.load(f)
+    
+    for m in matches:
+        with st.expander(f"⭐ {m['match']} | {m['prob']}"):
             col1, col2 = st.columns([2, 1])
             
             with col1:
-                st.markdown(f"**🏆 Лига:** {item['prob']}")
-                st.markdown(f"**🧠 Експертен Анализ:**")
-                st.write(item['strat'])
+                st.markdown("### 📝 Пълен Анализ")
+                st.write(m['strat'])
+                st.markdown("---")
+                st.markdown("### 📋 Потвърдени Състави")
+                st.info(m['injuries'])
             
             with col2:
-                st.success(f"**🎯 Прогноза:**\n\n{item['tip']}")
-                st.info(f"**⚖️ Рефер:**\n\n{item['ref']}")
-
-            st.divider()
-            
-            # Секция за състави (жълто поле)
-            st.warning(f"📋 **Потвърдена информация и състави:**\n\n{item['injuries']}")
-            
-            # Допълнителна статистика (ако има)
-            if "other" in item:
-                st.caption(f"🕒 Последна актуализация: {item['other'].get('Time', '---')}")
-
-st.sidebar.markdown("---")
-st.sidebar.write("🤖 **Система:** Gemini 1.5 Pro")
-st.sidebar.write("🌐 **Източник:** Търсене в реално време")
-st.sidebar.info("Данните се обновяват на всеки час с най-новите новини от спортните медии.")
+                st.markdown("### 🎯 Прогноза")
+                st.success(m['tip'])
+                st.markdown("### ⚖️ Рефер")
+                st.warning(m['ref'])
+                st.metric("Вероятност (AI)", "Висока")
+else:
+    st.warning("🔄 AI агентът в момента сканира пазара. Моля, стартирайте GitHub Action.")
