@@ -2,7 +2,9 @@ name: Hourly Deep Analysis Update
 
 on:
   schedule:
+    # Пуска скрипта на всеки кръгъл час
     - cron: '0 * * * *'
+  # Позволява ти да го пускаш ръчно от бутона "Run workflow"
   workflow_dispatch:
 
 jobs:
@@ -19,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests google-generativeai
+          pip install requests google-genai
 
       - name: Run scraper
         run: python scraper.py
