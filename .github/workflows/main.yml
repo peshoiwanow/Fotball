@@ -1,13 +1,16 @@
-name: Hourly Deep Analysis Update
+name: Hourly Football Analysis Update
 
 on:
   schedule:
+    # Стартира се автоматично на всяка 0-та минута на всеки час
     - cron: '0 * * * *'
   workflow_dispatch:
+    # Позволява ти да го стартираш ръчно от бутона в GitHub
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -18,11 +21,15 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
       - name: Run scraper
         env:
+          # Взема и двата ти API ключа от Secrets
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
         run: python scraper.py
 
       - name: Commit and push changes
@@ -30,5 +37,7 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add data.json
-          git commit -m "Auto update: $(date)" || echo "No changes"
-          git push
+          # Проверява дали има промени преди да направи commit, за да няма грешки
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update: $(date)" && git push)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
