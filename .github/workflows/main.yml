@@ -2,13 +2,12 @@ name: Hourly Deep Analysis Update
 
 on:
   schedule:
-    - cron: '0 * * * *' # Автоматично на всеки час
-  workflow_dispatch: # Позволява ти да го пуснеш ръчно от бутона
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -19,14 +18,11 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install requests
-
+        run: pip install requests
 
       - name: Run scraper
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          # Увери се, че това име съвпада точно със записаното в Settings -> Secrets!
         run: python scraper.py
 
       - name: Commit and push changes
@@ -34,5 +30,5 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add data.json
-          git commit -m "Update matches and deep analysis: $(date)" || echo "No changes to commit"
+          git commit -m "Auto update: $(date)" || echo "No changes"
           git push
