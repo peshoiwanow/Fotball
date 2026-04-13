@@ -1,42 +1,42 @@
 [
     {
-        "match": "Manchester United v Leeds (Premier League, England)",
-        "strat": "Not available",
-        "injuries": "Not available",
-        "ref": "Not available",
-        "tip": "Not available",
-        "prob": "Not available"
+        "match": "Manchester United - Leeds",
+        "strat": "N/A",
+        "injuries": "N/A",
+        "ref": "N/A",
+        "tip": "Manchester United to win",
+        "prob": "Manchester United win: 62.1%, Draw: 24.4%, Leeds win: 20.0% (based on odds)"
     },
     {
-        "match": "Fiorentina v Lazio (Serie A, Italy)",
-        "strat": "Not available",
-        "injuries": "Not available",
-        "ref": "Not available",
-        "tip": "Not available",
-        "prob": "Not available"
+        "match": "Fiorentina - Lazio",
+        "strat": "N/A",
+        "injuries": "N/A",
+        "ref": "N/A",
+        "tip": "N/A",
+        "prob": "N/A"
     },
     {
-        "match": "Levante v Getafe (La Liga, Spain)",
-        "strat": "Not available",
-        "injuries": "Not available",
-        "ref": "Not available",
-        "tip": "Not available",
-        "prob": "Not available"
+        "match": "Levante - Getafe",
+        "strat": "N/A",
+        "injuries": "N/A",
+        "ref": "N/A",
+        "tip": "N/A",
+        "prob": "N/A"
     },
     {
-        "match": "Eyupspor v Samsunspor (Süper Lig, Turkey)",
-        "strat": "Not available",
-        "injuries": "Not available",
-        "ref": "Not available",
-        "tip": "Not available",
-        "prob": "Not available"
+        "match": "ЦСКА София - Левски София",
+        "strat": "N/A",
+        "injuries": "N/A",
+        "ref": "Мариян Гребенчарски (главен съдия), Георги Тодоров, Иво Колев (помощници), Никола Попов, Димитър Димитров (ВАР)",
+        "tip": "N/A",
+        "prob": "N/A"
     },
     {
-        "match": "Brommapojkarna v AIK (Allsvenskan, Sweden)",
-        "strat": "Not available",
-        "injuries": "Not available",
-        "ref": "Not available",
-        "tip": "Not available",
-        "prob": "Not available"
+        "match": "Берое - Локомотив Пловдив",
+        "strat": "N/A",
+        "injuries": "N/A",
+        "ref": "N/A",
+        "tip": "N/A",
+        "prob": "N/A"
     }
 ]
