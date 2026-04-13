@@ -6,55 +6,51 @@ from datetime import datetime
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def run():
-    print("🚀 СТАРТ НА ДИАГНОСТИКАТА...")
+    print("🚀 СТАРТ НА ФУТБОЛНИЯ СКРАПЕР (Confirmed Model)...")
     if not GEMINI_API_KEY:
         print("❌ ГРЕШКА: Липсва API Ключ!")
         return
 
-    # Стъпка 1: Проверка кои модели са достъпни за теб
-    list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}"
-    try:
-        models_resp = requests.get(list_url)
-        models_data = models_resp.json()
-        
-        if 'error' in models_data:
-            print(f"❌ API ГРЕШКА ПРИ СПИСЪК: {models_data['error']['message']}")
-            return
+    # Използваме потвърдения работещ модел от твоята последна диагностика
+    selected_model = "models/gemini-2.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/{selected_model}:generateContent?key={GEMINI_API_KEY}"
+    
+    today = datetime.now().strftime('%d.%m.%Y')
+    prompt = (
+        f"Днес е {today}. Намери 5-те най-интересни футболни мача за днес или утре. "
+        "Направи анализ и прогноза за всеки. "
+        "Върни резултата САМО като чист JSON списък: "
+        "[{\"match\": \"...\", \"prob\": \"...\", \"strat\": \"...\", \"tip\": \"...\", \"market\": \"...\", \"injuries\": \"...\", \"ref\": \"...\"}]"
+    )
 
-        # Търсим модел, който поддържа генериране на съдържание
-        available_models = [m['name'] for m in models_data.get('models', []) if 'generateContent' in m.get('supportedGenerationMethods', [])]
-        
-        if not available_models:
-            print("❌ Google не ти позволява достъп до нито един модел в момента.")
-            return
-
-        # Избираме първия наличен модел (обикновено gemini-1.5-flash)
-        selected_model = available_models[0]
-        print(f"✅ Избран работещ модел: {selected_model}")
-
-        # Стъпка 2: Изпълнение на анализа с намерения модел
-        gen_url = f"https://generativelanguage.googleapis.com/v1beta/{selected_model}:generateContent?key={GEMINI_API_KEY}"
-        
-        prompt = "Намери 5 футболни мача за днес и върни JSON списък с ключове: match, tip, prob."
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json"}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.7,
+            "responseMimeType": "application/json"
         }
+    }
 
-        response = requests.post(gen_url, json=payload, timeout=60)
+    try:
+        print(f"📡 Изпращане на заявка към {selected_model}...")
+        response = requests.post(url, json=payload, timeout=90)
         res_data = response.json()
 
         if 'error' in res_data:
-            print(f"❌ ГРЕШКА ПРИ ГЕНЕРИРАНЕ: {res_data['error']['message']}")
+            print(f"❌ API ГРЕШКА: {res_data['error']['message']}")
             return
 
-        text = res_data['candidates'][0]['content']['parts'][0]['text']
+        # Извличане на готовия JSON
+        raw_text = res_data['candidates'][0]['content']['parts'][0]['text']
+        data = json.loads(raw_text)
+        
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(json.loads(text), f, ensure_ascii=False, indent=4)
-        print("✅ УСПЕХ! Данните са записани успешно.")
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        
+        print(f"✅ УСПЕХ: Анализирани и записани {len(data)} мача в data.json!")
 
     except Exception as e:
-        print(f"❌ Критична грешка: {str(e)}")
+        print(f"❌ Критична грешка при обработка: {str(e)}")
 
 if __name__ == "__main__":
     run()
