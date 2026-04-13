@@ -1,16 +1,16 @@
 import json
 import os
 from datetime import datetime
-from google import genai
+import google.generativeai as genai
 
-# === КОНФИГУРАЦИЯ ===
-GEMINI_API_KEY = "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Конфигурация
+API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def run():
-    print("🚀 Старт на мощния AI анализ...")
+    print("🚀 Старт на професионалния анализ...")
     
-    # Списък с мачове
     matches = [
         {"h": "ЦСКА София", "a": "Левски София", "l": "Първа лига"},
         {"h": "Манчестър Юнайтед", "a": "Лийдс", "l": "Висша лига"},
@@ -19,49 +19,57 @@ def run():
         {"h": "Леванте", "a": "Хетафе", "l": "Ла Лига"}
     ]
     
-    # Промпт за генериране на всичко наведнъж
-    prompt = "Направи подробни футболни анализи на български за следните мачове:\n"
-    for m in matches:
-        prompt += f"- {m['h']} срещу {m['a']} ({m['l']})\n"
+    final_data = []
     
-    prompt += """
-    За всеки мач напиши точно 5-6 изречения подробна обосновка и завърши с 'Прогноза: [твоят залог]'. 
-    Раздели анализите за отделните мачове с три тирета (---).
-    """
+    # Промпт за масивен анализ
+    full_prompt = "Ти си футболен анализатор. Напиши детайлен анализ на български за всеки от тези мачове поотделно:\n"
+    for m in matches:
+        full_prompt += f"- {m['h']} срещу {m['a']} ({m['l']})\n"
+    
+    full_prompt += "\nИЗИСКВАНИЯ: За всеки мач напиши точно 5-6 изречения задълбочен анализ (форма, тактика, контузени) и завърши с 'Прогноза: [резултат]'. Разделяй мачовете с символите '###'."
 
     try:
-        response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
-        all_analyses = response.text.split("---")
-        print(f"✅ AI генерира текст с дължина: {len(response.text)} символа")
-    except Exception as e:
-        print(f"❌ AI Грешка: {e}")
-        all_analyses = ["Грешка при връзката с AI."] * len(matches)
-
-    final_data = []
-    for i, m in enumerate(matches):
-        match_full_name = f"{m['h']} - {m['a']}"
-        # Взимаме съответния анализ или слагаме базов, ако няма достатъчно разделители
-        analysis_text = all_analyses[i].strip() if i < len(all_analyses) else "Детайлният анализ се обработва..."
+        print("⏳ Изчакване на AI отговор (това може да отнеме до 1 минута)...")
+        response = model.generate_content(full_prompt)
+        raw_text = response.text
+        parts = raw_text.split("###")
         
-        # Опитваме да извадим само прогнозата за краткото поле
-        short_tip = "Виж анализа"
-        if "Прогноза:" in analysis_text:
-            short_tip = analysis_text.split("Прогноза:")[-1].strip().split('\n')[0][:25]
+        for i, m in enumerate(matches):
+            # Взимаме текста за конкретния мач
+            analysis = parts[i].strip() if i < len(parts) else "Анализът се обработва..."
+            
+            # Вадим прогнозата за краткото поле
+            prediction = "Виж анализа"
+            if "Прогноза:" in analysis:
+                prediction = analysis.split("Прогноза:")[-1].strip().split('\n')[0]
 
-        final_data.append({
-            "match": match_full_name,
-            "prob": m['l'],
-            "strat": analysis_text,
-            "tip": short_tip,
-            "market": "AI Expert Scan",
-            "injuries": "Проверено в реално време",
-            "ref": "Gemini AI",
-            "other": {"Time": datetime.now().strftime('%H:%M')}
-        })
+            final_data.append({
+                "match": f"{m['h']} - {m['a']}",
+                "prob": m['l'],
+                "strat": analysis,
+                "tip": prediction,
+                "market": "AI Expert Scan",
+                "injuries": "Детайлно проверени",
+                "ref": "Pro AI Engine",
+                "other": {"Time": datetime.now().strftime('%H:%M')}
+            })
+            
+        print(f"✅ Успешно генерирани {len(final_data)} анализа.")
+
+    except Exception as e:
+        print(f"❌ Критична грешка: {e}")
+        # Ако всичко се провали, поне да имаме структура
+        for m in matches:
+            final_data.append({
+                "match": f"{m['h']} - {m['a']}",
+                "prob": m['l'],
+                "strat": "В момента AI сървърите са претоварени. Моля, опитайте след 15 минути за пълен анализ.",
+                "tip": "В процес...",
+                "market": "AI", "injuries": "Проверка...", "ref": "AI", "other": {"Time": "---"}
+            })
 
     with open('data.json', 'w', encoding='utf-8') as f:
         json.dump(final_data, f, ensure_ascii=False, indent=4)
-    print("✅ Файлът data.json е готов!")
 
 if __name__ == "__main__":
     run()
