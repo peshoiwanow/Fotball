@@ -1,1 +1,42 @@
-[]
+[
+    {
+        "match": "ЦСКА - Левски",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Мариян Гребенчарски",
+        "tip": "Not available",
+        "prob": "Not available"
+    },
+    {
+        "match": "Манчестър Юнайтед - Лийдс",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
+    },
+    {
+        "match": "Фиорентина - Лацио",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
+    },
+    {
+        "match": "Леванте - Хетафе",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
+    },
+    {
+        "match": "Берое - Локомотив Пловдив",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
+    }
+]
