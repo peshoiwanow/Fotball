@@ -17,20 +17,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install google-genai requests
+          pip install -U google-generativeai
 
       - name: Run scraper
         run: python scraper.py
+        env:
+          GEMINI_API_KEY: "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
 
       - name: Commit and push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data.json
-          git commit -m "AI Expert Update" || exit 0
+          git commit -m "AI Expert Deep Analysis Update" || exit 0
           git push
