@@ -6,36 +6,42 @@ from datetime import datetime
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def run():
-    print("🚀 СТАРТ НА СКРАПЕРА (Direct Mode)...")
+    print("🚀 СТАРТ НА СКРАПЕРА (Stable v1 Mode)...")
     if not GEMINI_API_KEY:
-        print("❌ ГРЕШКА: Липсва API Ключ в Secrets!")
+        print("❌ ГРЕШКА: Липсва GEMINI_API_KEY!")
         return
 
-    # Използваме v1beta адреса, за да избегнем 404 грешката
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # ИЗПОЛЗВАМЕ СТАБИЛНАТА ВЕРСИЯ V1
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
     
     today = datetime.now().strftime('%d.%m.%Y')
     prompt_text = (
-        f"Днес е {today}. Използвай Google Search, за да намериш 5-те най-интересни футболни мача за днес или утре. "
-        "Направи подробен анализ, състави, информация за съдията и дай прогноза с коефициент. "
+        f"Днес е {today}. Намери 5-те най-интересни футболни мача за днес или утре. "
+        "Направи подробен анализ, състави и прогноза. "
         "Върни резултата САМО като чист JSON списък: "
         "[{\"match\": \"...\", \"prob\": \"...\", \"strat\": \"...\", \"tip\": \"...\", \"market\": \"...\", \"injuries\": \"...\", \"ref\": \"...\"}]"
     )
 
-    payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt_text}]
+        }]
+    }
 
     try:
-        print("🔍 AI анализира и претърсва интернет...")
+        print("🔍 Комуникация със стабилния сървър на Google...")
         response = requests.post(url, json=payload, timeout=40)
         res_data = response.json()
         
-        if 'candidates' not in res_data:
-            print(f"❌ Грешка от API: {res_data}")
-            return
+        if 'error' in res_data:
+            # Ако gemini-pro не е наличен, опитваме автоматично с gemini-1.5-pro
+            print("🔄 Опит с алтернативен модел...")
+            url = url.replace("gemini-pro", "gemini-1.5-pro")
+            response = requests.post(url, json=payload, timeout=40)
+            res_data = response.json()
 
         raw_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
         
-        # Почистване на JSON формата от AI маркери
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0]
         elif "```" in raw_text:
@@ -49,6 +55,7 @@ def run():
             
     except Exception as e:
         print(f"❌ Критична грешка: {str(e)}")
+        print(f"DEBUG DATA: {res_data if 'res_data' in locals() else 'No data'}")
 
 if __name__ == "__main__":
     run()
