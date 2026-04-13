@@ -1,47 +1,42 @@
 [
     {
-        "match": "Манчестър Юнайтед срещу Лийдс (Висша лига, Англия)",
-        "prob": "N/A",
-        "strat": "N/A",
-        "tip": "N/A",
-        "market": "N/A",
-        "injuries": "N/A",
-        "ref": "N/A"
+        "match": "Manchester United v Leeds (Premier League, England)",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
     },
     {
-        "match": "Фиорентина срещу Лацио (Серия А, Италия)",
-        "prob": "N/A",
-        "strat": "N/A",
-        "tip": "N/A",
-        "market": "N/A",
-        "injuries": "N/A",
-        "ref": "N/A"
+        "match": "Fiorentina v Lazio (Serie A, Italy)",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
     },
     {
-        "match": "Леванте срещу Хетафе (Ла Лига, Испания)",
-        "prob": "N/A",
-        "strat": "N/A",
-        "tip": "N/A",
-        "market": "N/A",
-        "injuries": "N/A",
-        "ref": "N/A"
+        "match": "Levante v Getafe (La Liga, Spain)",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
     },
     {
-        "match": "ЦСКА срещу Левски (efbet Лига, България)",
-        "prob": "N/A",
-        "strat": "N/A",
-        "tip": "N/A",
-        "market": "N/A",
-        "injuries": "N/A",
-        "ref": "N/A"
+        "match": "Eyupspor v Samsunspor (Süper Lig, Turkey)",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
     },
     {
-        "match": "Бирмингам срещу Рексъм (Чемпиъншип, Англия)",
-        "prob": "N/A",
-        "strat": "N/A",
-        "tip": "N/A",
-        "market": "N/A",
-        "injuries": "N/A",
-        "ref": "N/A"
+        "match": "Brommapojkarna v AIK (Allsvenskan, Sweden)",
+        "strat": "Not available",
+        "injuries": "Not available",
+        "ref": "Not available",
+        "tip": "Not available",
+        "prob": "Not available"
     }
 ]
