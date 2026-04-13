@@ -4,72 +4,86 @@ import requests
 import time
 from datetime import datetime
 
-# Вземаме ключа от GitHub Secrets
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Списък с ключове от Secrets
+KEYS = [
+    os.getenv("GEMINI_API_KEY"),
+    os.getenv("GEMINI_API_KEY_2")
+]
 
 def fetch_data():
     today = datetime.now().strftime('%d.%m.%Y')
-    # Използваме v1beta за поддръжка на Google Search
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # Използваме v1beta за Google Search функционалност
+    model_path = "models/gemini-2.5-flash"
     
-    # Промптът е стриктно форматиран, за да съвпадне с твоя app.py
     prompt = (
-        f"Днес е {today}. Използвай Google Search, за да намериш точно 5 реални футболни мача, "
-        f"които се играят ДНЕС ({today}). Включи разнообразни лиги (не само топ 5). "
-        "Върни резултата ЕДИНСТВЕНО като чист JSON списък от обекти с тези ключове: "
-        "match, strat, injuries, ref, tip, prob. Не добавяй никакъв друг текст!"
+        f"Днес е {today}. Използвай Google Search, за да намериш точно 5 реални футболни мача за {today}. "
+        "Върни резултата САМО като чист JSON списък със следните ключове: "
+        "match, strat, injuries, ref, tip, prob. Не пиши нищо друго!"
     )
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}], # Активираме търсенето в реално време
-        "generationConfig": {"temperature": 0.1}
-    }
+    for api_key in KEYS:
+        if not api_key:
+            continue
+            
+        url = f"https://generativelanguage.googleapis.com/v1beta/{model_path}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "tools": [{"google_search": {}}],
+            "generationConfig": {"temperature": 0.1}
+        }
 
-    # Логика за повторни опити при натоварване
-    for attempt in range(5):
         try:
-            print(f"📡 Опит {attempt+1}: Търсене на мачове за {today}...")
+            print(f"📡 Опит с API ключ (започващ с {api_key[:5]})...")
             response = requests.post(url, json=payload, timeout=120)
             res_data = response.json()
 
             if 'error' in res_data:
                 msg = res_data['error']['message']
-                print(f"⚠️ API съобщение: {msg}")
-                if "high demand" in msg.lower():
-                    time.sleep(20) # Изчакване при претоварване
+                print(f"⚠️ Грешка: {msg}")
+                # Ако квотата е свършила, премини на следващия ключ
+                if "quota" in msg.lower() or "limit" in msg.lower():
+                    print("🔄 Квотата е изчерпана. Превключвам на следващия ключ...")
                     continue
-                break
+                # Ако сървърът е претоварен, изчакай малко
+                if "high demand" in msg.lower():
+                    print("⏳ Високо натоварване. Чакам 20 сек...")
+                    time.sleep(20)
+                    continue
+                continue
 
-            # Извличане на текста и почистване от Markdown
+            # Обработка на резултата
             raw_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
             if "```json" in raw_text:
                 raw_text = raw_text.split("```json")[1].split("```")[0]
             elif "```" in raw_text:
                 raw_text = raw_text.split("```")[1].split("```")[0]
             
-            return json.loads(raw_text.strip())
+            data = json.loads(raw_text.strip())
+            
+            # Защита срещу KeyError за Streamlit сайта
+            for item in data:
+                for key in ["match", "strat", "injuries", "ref", "tip", "prob"]:
+                    if key not in item:
+                        item[key] = "N/A"
+            
+            return data
 
         except Exception as e:
-            print(f"❌ Грешка при изпълнението: {e}")
-            time.sleep(10)
+            print(f"❌ Техническа грешка: {e}")
+            continue
             
     return None
 
 def run():
-    print("🚀 СТАРТ НА АВТОМАТИЗИРАНИЯ СКРАПЕР...")
-    if not GEMINI_API_KEY:
-        print("❌ КРИТИЧНА ГРЕШКА: Липсва GEMINI_API_KEY!")
-        return
-    
+    print("🚀 СТАРТ НА СКРАПЕР С ДВОЙНА КВОТА...")
     result = fetch_data()
+    
     if result:
-        # Записваме данните в data.json
         with open('data.json', 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
         print(f"✅ УСПЕХ: data.json е обновен с {len(result)} мача!")
     else:
-        print("💀 Скриптът не успя да извлече данни след всички опити.")
+        print("💀 Всички ключове/опити се провалиха.")
 
 if __name__ == "__main__":
     run()
