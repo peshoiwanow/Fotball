@@ -1,77 +1,65 @@
 import json
 import os
-import requests
 import google.generativeai as genai
 from datetime import datetime
 
-# Ключове
-FOOTBALL_API_KEY = "3c34769062325c77742b58535184b260"
+# Ключ за Gemini от твоите Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def run():
-    print("🚀 СТАРТ НА СКРАПЕРА...")
+    print("🚀 СТАРТ НА АВТОНОМНИЯ AI СКРАПЕР...")
+    
+    if not GEMINI_API_KEY:
+        print("❌ Липсва API Ключ!")
+        return
+
     genai.configure(api_key=GEMINI_API_KEY)
     
-    # 1. Вземане на мачове - премахваме филтъра за лиги, за да сме сигурни, че ще намери нещо
-    url = "https://v3.football.api-sports.io/fixtures"
-    headers = {'x-rapidapi-key': FOOTBALL_API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
-    
-    # Търсим мачове за днес
-    today = datetime.now().strftime('%Y-%m-%d')
-    params = {'date': today, 'status': 'NS'} # NS = Not Started (предстоящи)
-    
-    try:
-        response = requests.get(url, headers=headers, params=params, timeout=15)
-        res_data = response.json()
-        fixtures = res_data.get('response', [])
-        
-        # Ако няма предстоящи за днес, търсим за утре
-        if not fixtures:
-            print("📅 Няма предстоящи мачове за днес, търся за утре...")
-            from datetime import timedelta
-            tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-            params['date'] = tomorrow
-            response = requests.get(url, headers=headers, params=params, timeout=15)
-            fixtures = response.json().get('response', [])
-
-        print(f"✅ Намерени {len(fixtures)} мача.")
-        # Взимаме първите 5 мача, които намерим
-        fixtures = fixtures[:5] 
-        
-    except Exception as e:
-        print(f"❌ Грешка при API: {e}")
-        return
-
-    if not fixtures:
-        print("❌ Не бяха намерени никакви мачове в API-то.")
-        return
-
+    # Използваме модела за търсене на информация в реално време
     model = genai.GenerativeModel('gemini-1.5-flash')
-    final_data = []
+    
+    today = datetime.now().strftime('%d.%m.%Y')
+    
+    # AI инструкция: Намери мачовете сам
+    prompt = f"""
+    Днес е {today}. Използвай Google Search и намери 5-те най-интересни футболни мача за днес или утре от големите европейски лиги.
+    За всеки мач направи:
+    1. Пълен анализ на формата и тактиката.
+    2. Потвърдени състави и контузени.
+    3. Информация за съдията.
+    4. Точна прогноза и коефициент.
 
-    for f in fixtures:
-        home = f['teams']['home']['name']
-        away = f['teams']['away']['name']
-        league = f['league']['name']
+    Върни резултата САМО като чист JSON списък в този формат:
+    [
+      {{
+        "match": "Отбор А - Отбор Б",
+        "prob": "Лига и Час",
+        "strat": "Много подробен анализ (поне 10 изречения)...",
+        "tip": "Прогноза",
+        "market": "Коефициент",
+        "injuries": "Състави и контузии",
+        "ref": "Информация за съдията"
+      }}
+    ]
+    """
+
+    try:
+        print("🔍 AI претърсва интернет за мачове...")
+        response = model.generate_content(prompt)
         
-        print(f"🔍 Анализирам: {home} - {away}")
+        # Почистване на отговора
+        text = response.text.replace('```json', '').replace('```', '').strip()
+        data = json.loads(text)
         
-        prompt = f"""Направи кратък, но професионален анализ за {home} - {away} ({league}). 
-        Дай прогноза, контузии и информация за съдията. 
-        Върни САМО чист JSON: {{"match": "{home} - {away}", "prob": "{league}", "strat": "...", "tip": "...", "market": "...", "injuries": "...", "ref": "..."}}"""
-
-        try:
-            res = model.generate_content(prompt)
-            text = res.text.replace('```json', '').replace('```', '').strip()
-            item = json.loads(text)
-            final_data.append(item)
-        except:
-            continue
-
-    # Записване на данните
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(final_data, f, ensure_ascii=False, indent=4)
-    print(f"🏁 УСПЕШНО: Записани {len(final_data)} мача.")
+        if data:
+            with open('data.json', 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            print(f"✅ УСПЕХ: Намерени и анализирани {len(data)} мача чрез AI Search!")
+        else:
+            print("⚠️ AI не върна данни.")
+            
+    except Exception as e:
+        print(f"❌ Критична грешка: {e}")
 
 if __name__ == "__main__":
     run()
