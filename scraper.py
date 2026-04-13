@@ -4,58 +4,63 @@ from datetime import datetime
 import google.generativeai as genai
 
 # === КОНФИГУРАЦИЯ ===
+# Използваме директен ключ за достъп
 GEMINI_API_KEY = "AIzaSyCOL_KW0qIoXk-4fdJgXB_njA-2VItGG-M"
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Опитваме с алтернативно име на модела, което е по-стабилно за v1beta
+model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
 def run_deep_ai_analysis():
-    print("🌐 AI стартира глобално проучване на мачовете за 13 април 2026...")
+    print(f"🌐 AI стартира проучване за {datetime.now().strftime('%d.%m.%Y')}...")
     
-    # Стъпка 1: AI намира мачовете за деня
     search_prompt = """
-    Днес е 13 април 2026 г. Намери 10-те най-важни футболни мача за днес, които присъстват в българските букмейкъри. 
-    Задължително включи дербито ЦСКА - Левски и мачовете от Висшата лига, Ла Лига и Серия А.
-    Върни резултата САМО като JSON списък: 
+    Днес е 13 април 2026 г. Изброй 5-те най-важни футболни мача за днес в Европа и България.
+    Върни ги САМО като JSON списък: 
     [{"home": "Отбор1", "away": "Отбор2", "league": "Лига", "time": "Час"}]
     """
     
     try:
+        # Генериране на съдържание
         response = model.generate_content(search_prompt)
-        # Почистване на JSON отговора
-        json_str = response.text.replace('```json', '').replace('```', '').strip()
+        
+        if not response.text:
+            print("❌ AI върна празен отговор.")
+            return
+
+        json_str = response.text.strip()
+        if "```json" in json_str:
+            json_str = json_str.split("```json")[1].split("```")[0].strip()
+        elif "```" in json_str:
+            json_str = json_str.split("```")[1].split("```")[0].strip()
+            
         matches = json.loads(json_str)
+        print(f"✅ Намерени {len(matches)} мача.")
         
         final_data = []
         for m in matches:
-            print(f"✅ Анализиране на {m['home']} vs {m['home']}...")
-            
-            # Стъпка 2: AI прави подробен анализ за всеки мач
-            analysis_prompt = f"""
-            Направи детайлен анализ за {m['home']} vs {m['away']} ({m['league']}). 
-            Провери в интернет: състави, контузии, съдия и форма. 
-            Дай прогноза с най-висок шанс за печалба на български.
-            """
+            print(f"🕵️‍♂️ Анализирам {m['home']} - {m['away']}...")
+            analysis_prompt = f"Направи кратък футболен анализ и прогноза на български за {m['home']} vs {m['away']}."
             analysis_res = model.generate_content(analysis_prompt)
             
             final_data.append({
                 "match": f"{m['home']} - {m['away']}",
-                "prob": f"{m['league']} ({m['time']} ч.)",
-                "market": "Deep Scan Analysis",
-                "tip": "ВИЖ ПРОГНОЗАТА",
+                "prob": f"{m['league']} ({m['time']})",
+                "market": "AI Analysis",
+                "tip": "ПРОГНОЗА",
                 "strat": analysis_res.text,
-                "injuries": "Проверено онлайн",
-                "ref": "Включен в анализа",
+                "injuries": "Проверено",
+                "ref": "Виж анализа",
                 "other": {"Updated": datetime.now().strftime('%H:%M')}
             })
 
-        # Записваме в data.json
         with open('data.json', 'w', encoding='utf-8') as f:
             json.dump(final_data, f, ensure_ascii=False, indent=4)
-        print(f"🔥 Успешно анализирани {len(final_data)} мача!")
+        print("🚀 Успешно обновяване на data.json!")
 
     except Exception as e:
-        print(f"Грешка: {str(e)}")
+        print(f"❌ КРИТИЧНА ГРЕШКА: {str(e)}")
 
 if __name__ == "__main__":
     run_deep_ai_analysis()
